@@ -1,26 +1,30 @@
-const { isLowercase } = require("validator");
-
-const mongoose = require(mongo);
+const mongoose = required(mongoose);
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      require: true,
+      required: true,
       minLength: 3,
       maxLength: 20,
     },
     lastName: {
       type: String,
-      require: true,
       minLength: 3,
       maxLength: 20,
     },
     email: {
       type: String,
-      require: true,
+      required: true,
       unique: true,
       lowercase: true,
+    },
+    password: {
+      type: String,
+      minLength: 8,
+      maxLength: 30,
+      required: true,
     },
     role: {
       type: String,
@@ -34,6 +38,20 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const model = mongoose.model("userSchema", userSchema);
+userSchema.methods.generatePasswordHash = async (password) => {
+  try {
+    return await bcrypt.hash(password, 10);
+  } catch (err) {
+    throw err;
+  }
+};
+userSchema.methods.comparePassword = async (password) => {
+  try {
+    return await bcrypt.compare(password, this.password);
+  } catch (err) {
+    throw err;
+  }
+};
+const User = mongoose.model("User", userSchema);
 
-module.exports = model;
+module.exports = User;
