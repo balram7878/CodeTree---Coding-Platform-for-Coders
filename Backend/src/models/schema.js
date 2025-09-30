@@ -1,4 +1,4 @@
-const mongoose = required(mongoose);
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
@@ -23,7 +23,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       minLength: 8,
-      maxLength: 30,
       required: true,
     },
     role: {
@@ -38,14 +37,14 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.methods.generatePasswordHash = async (password) => {
+userSchema.statics.generatePasswordHash = async function(password) {
   try {
     return await bcrypt.hash(password, 10);
   } catch (err) {
     throw err;
   }
 };
-userSchema.methods.comparePassword = async (password) => {
+userSchema.methods.comparePassword = async function (password){
   try {
     return await bcrypt.compare(password, this.password);
   } catch (err) {
