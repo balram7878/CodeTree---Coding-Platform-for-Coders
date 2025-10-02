@@ -1,6 +1,7 @@
 const { loginValidation } = require("../utils/validate");
 const user = require("../models/schema");
 const jwt = require("jsonwebtoken");
+const { v4:uuidv4 } = require("uuid");
 require("dotenv").config();
 
 const login = async (req, res) => {
@@ -13,9 +14,11 @@ const login = async (req, res) => {
     const isPasswordValid = await u.comparePassword(password);
     if (!isPasswordValid) throw new Error("invalid credential");
     const token = jwt.sign(
-      { _id: u._id, name: u.firstName, email: u.email },
+      { sub: u._id, name: u.firstName, email: u.email,role:u.role },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "1h",
+        jwtid: uuidv4()
+      }
     );
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
     res.status(200).send("User login successfully");

@@ -27,7 +27,6 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      value: ["user", "admin"],
       default: "user",
     },
     problemSolved: {
@@ -51,6 +50,9 @@ userSchema.methods.comparePassword = async function (password){
     throw err;
   }
 };
+
+
 const User = mongoose.model("User", userSchema);
+
 
 module.exports = User;
