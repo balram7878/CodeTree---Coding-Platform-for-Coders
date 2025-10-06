@@ -1,5 +1,6 @@
 const { Router } = require("express");
-const adminValidation=require("../../middleware/adminValidation");
+const adminValidation = require("../../middleware/adminValidation");
+const authValidation = require("../../middleware/authValidation");
 
 const {
   getProblem,
@@ -12,16 +13,15 @@ const {
 
 const problemRouter = Router();
 
-problemRouter.get("/:id", getProblem);
-problemRouter.get("/", getAllProblems);
-problemRouter.get("/user", solvedProblems);
-
+problemRouter.get("/getProblem/:id", authValidation, getProblem);
+problemRouter.get("/getAllProblems", authValidation, getAllProblems);
+problemRouter.get("/problemsSolved", authValidation, solvedProblems);
 
 //-->
-problemRouter.post("/create",adminValidation, createProblem);  //create problem
+problemRouter.post("/create", adminValidation, createProblem); //create problem
 //-->
 
-problemRouter.put("/:id", updateProblem);     //update problem
-problemRouter.delete("/:id", deleteProblem);  //delete problem
+problemRouter.put("/update/:id", adminValidation, updateProblem); //update problem
+problemRouter.delete("/delete/:id", adminValidation, deleteProblem); //delete problem
 
 module.exports = problemRouter;
