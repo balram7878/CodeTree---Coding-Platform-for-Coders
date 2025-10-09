@@ -1,5 +1,6 @@
 const submission_model = require("../../models/Submission.model");
 const problem_model = require("../../models/Problem.model");
+const { statuses } = require("../../utils/judge.0");
 const {
   createBatchedSubmission,
   getBatchedSubmission,
@@ -8,7 +9,8 @@ const {
 
 const submit = async (req, res) => {
   try {
-    const userId = req.payload.sub;
+    //  console.log(req.user);
+    const userId = req.user.sub;
     const problemId = req.params.id;
 
     if (!userId) return res.status(404).json({ message: "user not exist" });
@@ -49,7 +51,7 @@ const submit = async (req, res) => {
     const tokens = submissionTokens.map((e) => e.token);
     const tokenString = tokens.join(",");
     const finalResult = await getBatchedSubmission(tokenString);
-
+    // console.log(finalResult);
     let totalTime = 0;
     let totalMemory = 0;
     let overallStatus = "Accepted";
@@ -68,10 +70,10 @@ const submit = async (req, res) => {
         continue;
       }
       passedCount++;
-      totalTime += time;
+      totalTime += parseFloat(time);
       totalMemory = Math.max(totalMemory, memory);
     }
-
+   
     solution.status = overallStatus;
     solution.memory = totalMemory;
     solution.runtime = totalTime;
@@ -91,6 +93,7 @@ const submit = async (req, res) => {
         status: overallStatus,
         passed: passedCount,
         error: overallErrorMessage,
+        stderr: statuses[firstErrorStatusId],
       });
     }
   } catch (err) {
@@ -105,4 +108,4 @@ const run = async (req, res) => {
   }
 };
 
-module.exports = { submit,run};
+module.exports = { submit, run };

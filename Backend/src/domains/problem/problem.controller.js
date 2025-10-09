@@ -6,6 +6,7 @@ const {
   statuses,
 } = require("../../utils/judge.0");
 const problem_model = require("../../models/Problem.model");
+const submission_model = require("../../models/Submission.model");
 
 const createProblem = async (req, res) => {
   try {
@@ -80,7 +81,9 @@ const getAllProblems = async (req, res) => {
     // const page=0;
     // const skip=(page-1)*limit;
     // const allProblems=await problem_model.find(req.params.id).skip(skip).limit(limit);
-    const allProblems = await problem_model.find().select("_id title tags difficulty");
+    const allProblems = await problem_model
+      .find()
+      .select("_id title tags difficulty");
     res.status(200).json(allProblems);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -91,7 +94,11 @@ const getProblem = async (req, res) => {
   try {
     const _id = req.params.id;
     if (!_id) return res.status(404).json({ message: "id missing" });
-    const problem = await problem_model.findById(_id).select("_id title description tags difficulty visibleTestCases boilerplateCode");
+    const problem = await problem_model
+      .findById(_id)
+      .select(
+        "_id title description tags difficulty visibleTestCases boilerplateCode"
+      );
     if (!problem) return res.status(404).json({ message: "problem not found" });
     res.status(200).json(problem);
   } catch (err) {
@@ -99,7 +106,16 @@ const getProblem = async (req, res) => {
   }
 };
 
-const solvedProblems = async (req, res) => {};
+const solvedProblems = async (req, res) => {
+  try {
+    const userId = req.user.sub;
+    if (!userId) return res.status(404).json({ message: "no user found" });
+    const problems = await submission_model.find({ userId });
+    res.status(200).json(problems);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 const updateProblem = async (req, res) => {
   try {
