@@ -1,11 +1,11 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
+import z from "zod";
 
 export default function Signup() {
   const {
     register,
-    handleSubmit,
-    formState: { errors },
+    handleSubmit
   } = useForm();
 
   return (
@@ -29,7 +29,7 @@ export default function Signup() {
               placeholder="Enter your name"
               className="w-full p-2.5 mt-1 rounded-lg bg-gray-800 border border-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-900 outline-none"
               required
-              {...register("fullName", { required: true })}
+              {...register("fullName")}
             />
           </div>
 
@@ -43,7 +43,7 @@ export default function Signup() {
               placeholder="Enter your email"
               className="w-full p-2.5 mt-1 rounded-lg bg-gray-800 border border-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-900 outline-none"
               required
-              {...register("email", { required: true })}
+              {...register("email")}
             />
           </div>
 
@@ -57,7 +57,7 @@ export default function Signup() {
               placeholder="Create a password"
               className="w-full p-2.5 mt-1 rounded-lg bg-gray-800 border border-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-900 outline-none"
               required
-              {...register("password", { required: true })}
+              {...register("password")}
             />
           </div>
 
