@@ -47,7 +47,11 @@ const login = async (req, res) => {
       { expiresIn: "1h", jwtid: uuidv4() }
     );
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
-    res.status(200).send("User login successfully");
+    res.status(200).json({
+      firstName: u.firstName,
+      email: u.email,
+      status: "login successfully",
+    });
   } catch (err) {
     res.status(401).json({ error: err.message });
   }
@@ -106,10 +110,22 @@ const userRegister = async (req, res) => {
       { expiresIn: "1h", jwtid: uuidv4() }
     );
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
-    res.status(201).send("user registered successfully");
+    res.status(201).json({
+      firstName: u.firstName,
+      email: u.email,
+      message: "user registered successfully",
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+};
+
+const authUser = async (req, res) => {
+  res.status(200).json({
+    firstName: req.user.firstName,
+    email: req.user.email,
+    message: "authenticated user",
+  });
 };
 
 module.exports = {
@@ -118,5 +134,6 @@ module.exports = {
   getProfile,
   userRegister,
   adminRegister,
-  deleteProfile
+  deleteProfile,
+  authUser,
 };
