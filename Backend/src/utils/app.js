@@ -3,18 +3,25 @@ const main = require("../config/db");
 const cookieParser = require("cookie-parser");
 const userRouter = require("../domains/auth/auth.routes");
 const problemRouter = require("../domains/problem/problem.routes");
-const solutionRouter=require("../domains/solution/solution.routes");
+const solutionRouter = require("../domains/solution/solution.routes");
 const client = require("../config/redis");
+const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
 app.use("/auth", userRouter);
 app.use("/problem", problemRouter);
-app.use("/solution",solutionRouter);
+app.use("/solution", solutionRouter);
 
 const initializeConnection = async () => {
   try {

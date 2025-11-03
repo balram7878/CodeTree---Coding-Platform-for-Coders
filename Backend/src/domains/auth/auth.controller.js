@@ -95,6 +95,7 @@ const adminRegister = async (req, res) => {
 
 const userRegister = async (req, res) => {
   try {
+    
     registrationValidation(req.body);
     const isExist = await user.exists({ email: req.body.email });
     if (isExist) {
@@ -104,6 +105,7 @@ const userRegister = async (req, res) => {
     req.body.password = await user.generatePasswordHash(password);
     req.body.role = "user";
     const u = await user.create(req.body);
+
     const token = jwt.sign(
       { sub: u._id, name: u.firstName, email: u.email, role: u.role },
       process.env.JWT_SECRET_KEY,

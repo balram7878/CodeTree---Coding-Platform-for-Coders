@@ -1,7 +1,10 @@
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { login } from "../utils/authSlice";
 
 const schema = z.object({
   email: z.string().email(),
@@ -15,10 +18,22 @@ export default function Login() {
     formState: { errors },
   } = useForm({ resolver: zodResolver(schema) });
 
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state) => state?.auth?.isAuthenticated);
+  
+  useEffect(() => {
+    if (isAuthenticated) navigate("/");
+  }, [isAuthenticated]);
+
+  const loginForm = (data) => {
+    dispatch(login(data));
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <form
-        onSubmit={handleSubmit(console.log)}
+        onSubmit={handleSubmit(loginForm)}
         className="relative bg-gray-900/70 backdrop-blur-md border border-gray-700 shadow-2xl rounded-2xl p-8 flex flex-col w-[420px]  text-gray-200"
       >
         <div className="absolute top-2 left-1/2 -translate-x-1/2  text-white text-2xl px-6 py-2 rounded-full shadow-lg font-bold tracking-wide">

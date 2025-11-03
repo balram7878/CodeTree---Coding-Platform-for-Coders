@@ -1,7 +1,10 @@
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
+import { Link, Navigate, useNavigate } from "react-router";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { registerUser } from "../utils/authSlice";
 
 const schema = z.object({
   email: z.string().email(),
@@ -12,19 +15,34 @@ const schema = z.object({
     .regex(/[a-z]/, "Password must include at least one lowercase letter")
     .regex(/[0-9]/, "Password must include at least one number")
     .regex(/[@$!%*?&]/, "Password must include at least one special character"),
-  fullName: z
+  firstName: z
     .string()
     .min(3, "Name must be at least 3 characters long")
     .regex(/^[A-Za-z\s]+$/, "Name should contain only letters and spaces"),
 });
 
 export default function Signup() {
-  const { register, handleSubmit,formState:{errors} } = useForm({ resolver: zodResolver(schema) });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({ resolver: zodResolver(schema) });
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const isAuthenticated = useSelector((state) => state?.auth?.isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated) navigate("/");
+  }, [isAuthenticated]);
+
+  const formSubmit = (data) => {
+    dispatch(registerUser(data));
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <form
-        onSubmit={handleSubmit(console.log)}
+        onSubmit={handleSubmit(formSubmit)}
         className="relative bg-gray-900/70 backdrop-blur-md border border-gray-700 shadow-2xl rounded-2xl p-8 flex flex-col w-[420px]  text-gray-200"
       >
         <div className="absolute top-2 left-1/2 -translate-x-1/2  text-white text-2xl px-6 py-2 rounded-full shadow-lg font-bold tracking-wide">
@@ -34,7 +52,7 @@ export default function Signup() {
         <div className="mt-15 flex flex-col gap-5 font-medium">
           <div>
             <label htmlFor="name" className="text-sm text-gray-400">
-              Full Name
+              First Name
             </label>
             <input
               id="name"
@@ -42,9 +60,13 @@ export default function Signup() {
               placeholder="Enter your name"
               className="w-full p-2.5 mt-1 rounded-lg bg-gray-800 border border-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-900 outline-none"
               required
-              {...register("fullName")}
+              {...register("firstName")}
             />
-            {errors.fullName && (<span className="text-red-600 text-sm">{errors.fullName.message}</span>)}
+            {errors.fullName && (
+              <span className="text-red-600 text-sm">
+                {errors.fullName.message}
+              </span>
+            )}
           </div>
 
           <div>
@@ -59,7 +81,13 @@ export default function Signup() {
               required
               {...register("email")}
             />
-            {errors.email ? (<span className="text-red-600 text-sm">{errors.email.message}</span>):""}
+            {errors.email ? (
+              <span className="text-red-600 text-sm">
+                {errors.email.message}
+              </span>
+            ) : (
+              ""
+            )}
           </div>
 
           <div>
@@ -74,7 +102,11 @@ export default function Signup() {
               required
               {...register("password")}
             />
-            {errors.password && (<span className="text-red-600 text-sm">{errors.password.message}</span>)}
+            {errors.password && (
+              <span className="text-red-600 text-sm">
+                {errors.password.message}
+              </span>
+            )}
           </div>
 
           <button

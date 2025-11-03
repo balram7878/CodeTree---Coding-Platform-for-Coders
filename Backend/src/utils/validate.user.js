@@ -10,14 +10,14 @@ const registrationValidation = ({ firstName, email, password }) => {
   if (!validators.isEmail(email)) throw new Error("invalid email");
   if (!password) throw new Error("password not provided");
   if (!validators.isStrongPassword(password, { minLength: 8, minSymbols: 0 }))
-    throw new Error("password must be stronger (min 8 chars, numbers & letters required)");
+    throw new Error(
+      "password must be stronger (min 8 chars, numbers & letters required)"
+    );
 };
 
 const loginValidation = ({ email, password }) => {
   if (!email) throw new Error("email not provided");
   if (!password) throw new Error("password not provided");
 };
-
-
 
 module.exports = { registrationValidation, loginValidation };
