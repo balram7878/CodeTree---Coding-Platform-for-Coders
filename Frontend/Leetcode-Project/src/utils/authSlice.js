@@ -17,7 +17,7 @@ export const login = createAsyncThunk(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axiosClient.post("/auth/login", data);
+      const response = await axiosClient.post("/auth/login", credentials);
       return response.data;
     } catch (err) {
       return rejectWithValue(err.message);
@@ -49,7 +49,7 @@ export const logout = createAsyncThunk(
   }
 );
 
-export const authSlice = createSlice({
+export const auth = createSlice({
   name: "auth",
   initialState: {
     user: null,
@@ -97,7 +97,7 @@ export const authSlice = createSlice({
         state.error = null;
       })
       .addCase(authUser.fulfilled, (state, action) => {
-        state.isAuthenticated = !!action?.payload;
+        state.isAuthenticated = true;
         state.loading = false;
         state.user = action?.payload;
         state.error = null;
@@ -106,7 +106,7 @@ export const authSlice = createSlice({
         state.error = action?.payload;
         state.loading = false;
         state.user = null;
-        state.isAuthenticated = !!action?.payload;
+        state.isAuthenticated = false;
       })
       .addCase(logout.pending, (state) => {
         state.loading = true;
@@ -127,4 +127,4 @@ export const authSlice = createSlice({
   },
 });
 
-export default authSlice.reducer;
+export default auth.reducer;

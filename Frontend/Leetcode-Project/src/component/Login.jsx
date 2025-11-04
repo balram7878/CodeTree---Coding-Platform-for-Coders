@@ -20,8 +20,8 @@ export default function Login() {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state) => state?.auth?.isAuthenticated);
-  
+  const { isAuthenticated, loading } = useSelector((state) => state?.auth);
+
   useEffect(() => {
     if (isAuthenticated) navigate("/");
   }, [isAuthenticated]);
@@ -80,12 +80,27 @@ export default function Login() {
               </span>
             )}
           </div>
-
           <button
             type="submit"
-            className="mt-4 bg-gradient-to-br from-gray-900  to-black hover:from-gray-800 hover:to-gray-900 cursor-pointer transition-all duration-200 text-white py-2.5 rounded-lg font-semibold shadow-md"
+            disabled={loading}
+            className={`
+        mt-4 
+        text-white 
+        py-2.5 
+        rounded-lg 
+        font-semibold 
+        shadow-md 
+        transition-all 
+        duration-200 
+        
+        ${
+          loading
+            ? "bg-gray-400 cursor-not-allowed opacity-75 backdrop-blur-sm"
+            : "bg-gradient-to-br from-gray-900 to-black hover:from-gray-800 hover:to-gray-900 cursor-pointer"
+        }
+    `}
           >
-            Login
+            Create Account
           </button>
 
           <p className="text-sm text-gray-400 text-center mt-2">

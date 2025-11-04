@@ -95,7 +95,6 @@ const adminRegister = async (req, res) => {
 
 const userRegister = async (req, res) => {
   try {
-    
     registrationValidation(req.body);
     const isExist = await user.exists({ email: req.body.email });
     if (isExist) {
@@ -123,11 +122,17 @@ const userRegister = async (req, res) => {
 };
 
 const authUser = async (req, res) => {
-  res.status(200).json({
-    firstName: req.user.firstName,
-    email: req.user.email,
-    message: "authenticated user",
-  });
+  try {
+    res.status(200).json({
+      firstName: req.user.firstName,
+      email: req.user.email,
+      message: "authenticated user",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
 };
 
 module.exports = {

@@ -3,7 +3,7 @@ import authSliceReducers from "../utils/authSlice";
 
 const store = configureStore({
   reducer: {
-    authSlice: authSliceReducers,
+    auth: authSliceReducers,
   },
 });
 
