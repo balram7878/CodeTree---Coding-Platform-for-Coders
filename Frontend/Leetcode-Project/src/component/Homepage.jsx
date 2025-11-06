@@ -1,12 +1,11 @@
-import ProblemCard from "./Homepage Compenents/ProblemCard";
+import ProblemList from "./Homepage Compenents/ProblemList";
 import Header from "./Homepage Compenents/Header";
 
 export default function Homepage() {
   return (
     <>
       <Header />
-
-      <ProblemCard />
+      <ProblemList />
     </>
   );
 }
