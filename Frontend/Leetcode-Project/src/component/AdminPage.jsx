@@ -1,10 +1,10 @@
-import AdminDashboard from "./Admin Pages/AdminDashboard";
+import { Outlet } from "react-router";
 import Header from "./Homepage Pages/Header";
 export default function AdminPage() {
   return (
     <>
       <Header/>
-      <AdminDashboard/>
+      <Outlet/>
     </>
   );
 }
