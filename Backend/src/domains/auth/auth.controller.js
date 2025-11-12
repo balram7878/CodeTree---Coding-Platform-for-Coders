@@ -123,7 +123,7 @@ const userRegister = async (req, res) => {
 
 const authUser = async (req, res) => {
   try {
-    console.log("auth user running")
+    // console.log("auth user running")
     res.status(200).json({
       firstName: req.user.name,
       email: req.user.email,
