@@ -37,7 +37,7 @@ export default function Login() {
         className="relative bg-gray-900/70 backdrop-blur-md border border-gray-700 shadow-2xl rounded-2xl p-8 flex flex-col w-[420px]  text-gray-200"
       >
         <div className="absolute top-2 left-1/2 -translate-x-1/2  text-white text-2xl px-6 py-2 rounded-full shadow-lg font-bold tracking-wide">
-          LeetCode
+          CodeTree
         </div>
 
         <div className="mt-15 flex flex-col gap-5 font-medium">
