@@ -1,341 +1,300 @@
-import React, { useState } from 'react';
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  problemSchema,
+  SUPPORTED_LANGUAGES,
+  TAGS,
+} from "./schema/problemSchema";
+import axiosClient from "../../utils/axiosClient";
 
-// Configuration for supported languages
-const SUPPORTED_LANGUAGES = ["C++", "Java", "Python", "JavaScript", "Rust", "C"];
-const DEFAULT_LANGUAGE_CODE = SUPPORTED_LANGUAGES[0];
+export default function CreateProblem() {
+  const form = useForm({
+    resolver: zodResolver(problemSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      difficulty: "Easy",
+      tags: [],
+      constraints: [""],
+      visibleTestCases: [{ stdin: "", expected_output: "", explanation: "" }],
+      hiddenTestCases: [{ stdin: "", expected_output: "" }],
+      boilerplateCode: SUPPORTED_LANGUAGES.map((lang) => ({
+        language: lang,
+        code: "",
+      })),
+      referenceSolution: SUPPORTED_LANGUAGES.map((lang) => ({
+        language: lang,
+        source_code: "",
+      })),
+    },
+  });
 
-// Initial state structure for a new problem
-const initialProblemState = {
-  title: '',
-  description: '',
-  difficulty: 'Easy',
-  tags: ['Array'],
-  visibleTestCases: [{ stdin: '1,2\n', expectedOutput: '3\n' }],
-  hiddenTestCases: [{ stdin: '10,20\n', expectedOutput: '30\n' }],
-  // Dynamic map to store code for each language
-  boilerplate: SUPPORTED_LANGUAGES.reduce((acc, lang) => ({ ...acc, [lang]: `// Write your ${lang} solution here` }), {}),
-  referenceSolution: {
-    language: DEFAULT_LANGUAGE_CODE,
-    sourceCode: `// Optimal solution in ${DEFAULT_LANGUAGE_CODE}`
-  }
-};
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+  } = form;
 
-// Reusable Button Component for adding/removing items
-const IconButton = ({ children, onClick, className = '' }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`p-1 rounded-full hover:bg-gray-700 transition duration-150 ${className}`}
-  >
-    {children}
-  </button>
-);
+  const visibleTC = useFieldArray({ control, name: "visibleTestCases" });
+  const hiddenTC = useFieldArray({ control, name: "hiddenTestCases" });
+  const constraints = useFieldArray({ control, name: "constraints" });
 
-const CreateProblemPage = () => {
-  const [problem, setProblem] = useState(initialProblemState);
-  const [activeBoilerplateTab, setActiveBoilerplateTab] = useState(DEFAULT_LANGUAGE_CODE);
-  
-  // State for the reference solution tab, tracked separately from problem state
-  const [activeSolutionLanguage, setActiveSolutionLanguage] = useState(DEFAULT_LANGUAGE_CODE); 
-
-  // --- Generic Change Handlers ---
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProblem(prev => ({ ...prev, [name]: value }));
+  const submitProblem = async (payload) => {
+    let res = await axiosClient.post("/problems/create", payload);
+    return res.data;
   };
 
-  const handleDifficultyChange = (e) => {
-    setProblem(prev => ({ ...prev, difficulty: e.target.value }));
+  const onSubmit = async (data) => {
+    try {
+      const res = await submitProblem(data);
+      console.log("Problem created:", res);
+      // optional UX
+      alert("Problem created successfully");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "Failed to create problem");
+    }
   };
 
-  // --- Test Case Handlers ---
-  const handleTestCaseChange = (type, index, field, value) => {
-    const updatedCases = problem[type].map((item, i) => 
-      i === index ? { ...item, [field]: value } : item
-    );
-    setProblem(prev => ({ ...prev, [type]: updatedCases }));
-  };
-
-  const addTestCase = (type) => {
-    setProblem(prev => ({ ...prev, [type]: [...prev[type], { stdin: '', expectedOutput: '' }] }));
-  };
-
-  const removeTestCase = (type, index) => {
-    setProblem(prev => ({ ...prev, [type]: prev[type].filter((_, i) => i !== index) }));
-  };
-
-  // --- Tag Handlers ---
-  const handleTagChange = (index, value) => {
-    const newTags = problem.tags.map((tag, i) => (i === index ? value : tag));
-    setProblem(prev => ({ ...prev, tags: newTags }));
-  };
-
-  const addTag = () => {
-    setProblem(prev => ({ ...prev, tags: [...prev.tags, 'new-tag'] }));
-  };
-
-  const removeTag = (index) => {
-    setProblem(prev => ({ ...prev, tags: problem.tags.filter((_, i) => i !== index) }));
-  };
-  
-  // --- Code Handlers ---
-  const handleBoilerplateChange = (language, code) => {
-    setProblem(prev => ({
-      ...prev,
-      boilerplate: { ...prev.boilerplate, [language]: code }
-    }));
-  };
-
-  const handleReferenceSolutionChange = (language, code) => {
-    setProblem(prev => ({
-      ...prev,
-      referenceSolution: {
-        language: language,
-        sourceCode: code
-      }
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Submitting Problem Data:", problem);
-    // In a real application, you would send 'problem' data to your server here.
-    // Display submission successful message (replace with modal)
-    alert("Problem submitted successfully! Check console for data structure.");
-  };
-
-  // --- Component Render Helpers ---
-  const renderTestCases = (type, title) => (
-    <div className="space-y-4 rounded-lg bg-gray-700/50 p-4 border border-gray-700">
-      <h3 className="text-xl font-semibold text-white mb-3">{title}</h3>
-      {problem[type].map((testCase, index) => (
-        <div key={index} className="border-t border-gray-700 pt-4 relative">
-          <h4 className="text-sm font-medium text-gray-300 mb-2">Test Case {index + 1}</h4>
-          
-          <div className="flex gap-4">
-            {/* STDIN Input */}
-            <div className="flex-1">
-              <label htmlFor={`${type}-stdin-${index}`} className="block text-sm font-medium text-gray-400 mb-1">STDIN</label>
-              <textarea
-                id={`${type}-stdin-${index}`}
-                rows="3"
-                value={testCase.stdin}
-                onChange={(e) => handleTestCaseChange(type, index, 'stdin', e.target.value)}
-                className="w-full bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., 5"
-              />
-            </div>
-            
-            {/* Expected Output Input */}
-            <div className="flex-1">
-              <label htmlFor={`${type}-output-${index}`} className="block text-sm font-medium text-gray-400 mb-1">Expected Output</label>
-              <textarea
-                id={`${type}-output-${index}`}
-                rows="3"
-                value={testCase.expectedOutput}
-                onChange={(e) => handleTestCaseChange(type, index, 'expectedOutput', e.target.value)}
-                className="w-full bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., 15"
-              />
-            </div>
-          </div>
-          
-          <IconButton 
-            onClick={() => removeTestCase(type, index)} 
-            className="absolute top-2 right-2 text-red-400"
-          >
-            {/* X icon for removing test case */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
-          </IconButton>
-        </div>
-      ))}
-      <button 
-        type="button" 
-        onClick={() => addTestCase(type)}
-        className="mt-4 text-indigo-400 hover:text-indigo-300 flex items-center text-sm font-medium"
-      >
-        {/* Plus icon */}
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" /></svg>
-        Add Test Case
-      </button>
-    </div>
-  );
-
-  const renderCodeEditor = (language, code, onChangeHandler) => (
-    <textarea
-      key={language}
-      rows="10"
-      value={code}
-      onChange={(e) => onChangeHandler(language, e.target.value)}
-      className="w-full bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-4 font-mono text-sm focus:ring-indigo-500 focus:border-indigo-500 resize-y"
-      placeholder={`Enter ${language} code here...`}
-    />
-  );
-  
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      <div className="max-w-6xl mx-auto">
-        
-        <h1 className="text-4xl font-extrabold text-white mb-8 border-b border-gray-700 pb-3">
-          Create New Coding Problem
-        </h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-8">
-          
-          {/* Section 1: Core Problem Details */}
-          <div className="bg-gray-800 p-6 rounded-xl shadow-lg space-y-4">
-            <h2 className="text-2xl font-bold text-indigo-400 mb-4">Core Details</h2>
-            
-            {/* Title */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-400 mb-1">Problem Title</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={problem.title}
-                onChange={handleInputChange}
-                className="w-full bg-gray-900 text-white border border-gray-600 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500"
-                required
-              />
-            </div>
+    <div className="min-h-screen bg-[#0f0f0f] text-gray-200 p-10">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="max-w-5xl mx-auto space-y-10"
+      >
+        {/* HEADER */}
+        <h1 className="text-3xl font-bold tracking-wide">Create New Problem</h1>
 
-            {/* Description */}
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Description (Markdown Supported)</label>
-              <textarea
-                id="description"
-                name="description"
-                rows="8"
-                value={problem.description}
-                onChange={handleInputChange}
-                className="w-full bg-gray-900 text-white border border-gray-600 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm resize-y"
-                placeholder="Write the full problem statement here (e.g., constraints, input format, output format)..."
-                required
-              />
-            </div>
-            
-            {/* Difficulty & Tags */}
-            <div className="flex flex-col md:flex-row gap-6">
-              
-              {/* Difficulty */}
-              <div className="flex-1">
-                <label htmlFor="difficulty" className="block text-sm font-medium text-gray-400 mb-1">Difficulty</label>
-                <select
-                  id="difficulty"
-                  name="difficulty"
-                  value={problem.difficulty}
-                  onChange={handleDifficultyChange}
-                  className="w-full bg-gray-900 text-white border border-gray-600 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
-                >
-                  <option value="Easy">Easy</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Hard">Hard</option>
-                </select>
-              </div>
+        {/* BASIC INFO */}
+        <section className="bg-[#161616] p-6 rounded-xl space-y-4">
+          <h2 className="text-xl font-semibold">Basic Information</h2>
 
-              {/* Tags */}
-              <div className="flex-2 w-full">
-                <label className="block text-sm font-medium text-gray-400 mb-1">Tags (Max 5)</label>
-                <div className="flex flex-wrap gap-2 items-center">
-                  {problem.tags.map((tag, index) => (
-                    <div key={index} className="flex items-center bg-gray-700 rounded-full px-3 py-1">
-                      <input
-                        type="text"
-                        value={tag}
-                        onChange={(e) => handleTagChange(index, e.target.value)}
-                        className="bg-transparent text-gray-200 text-sm focus:outline-none w-20"
-                      />
-                      <IconButton onClick={() => removeTag(index)} className="text-gray-400 hover:text-red-400 ml-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                      </IconButton>
-                    </div>
-                  ))}
-                  {problem.tags.length < 5 && (
-                    <IconButton onClick={addTag} className="text-indigo-400 hover:bg-indigo-500/20">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" /></svg>
-                    </IconButton>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Section 2: Test Cases */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {renderTestCases('visibleTestCases', 'Visible Test Cases (Shown to User)')}
-            {renderTestCases('hiddenTestCases', 'Hidden Test Cases (For Grading)')}
+          <div>
+            <label className="block text-sm mb-1">Title</label>
+            <input
+              {...register("title")}
+              className="w-full bg-[#0f0f0f] border border-gray-700 rounded-lg p-2"
+            />
+            <p className="text-red-500 text-sm">{errors.title?.message}</p>
           </div>
 
-          {/* Section 3: Boilerplate Code */}
-          <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold text-indigo-400 mb-4">Boilerplate Code (Per Language)</h2>
-            
-            {/* Language Tabs */}
-            <div className="flex space-x-1 mb-4 border-b border-gray-700">
-              {SUPPORTED_LANGUAGES.map(lang => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => setActiveBoilerplateTab(lang)}
-                  className={`py-2 px-4 text-sm font-medium transition duration-150 ${
-                    activeBoilerplateTab === lang
-                      ? 'border-b-2 border-indigo-500 text-indigo-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+          <div>
+            <label className="block text-sm mb-1">Description</label>
+            <textarea
+              rows={4}
+              {...register("description")}
+              className="w-full bg-[#0f0f0f] border border-gray-700 rounded-lg p-2"
+            />
+            <p className="text-red-500 text-sm">
+              {errors.description?.message}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Difficulty</label>
+            <select
+              {...register("difficulty")}
+              className="bg-[#0f0f0f] border border-gray-700 rounded-lg p-2"
+            >
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+          {/* TAGS */}
+          <div>
+            <label className="block text-sm mb-2">Tags (max 5)</label>
+
+            <div className="flex flex-wrap gap-3 border-1 border-gray-700 p-4 rounded-lg space-y-1">
+              {TAGS.map((tag) => (
+                <label
+                  key={tag}
+                  className="flex items-center gap-2 text-sm cursor-pointer"
                 >
-                  {lang}
-                </button>
+                  <input
+                    type="checkbox"
+                    value={tag}
+                    {...register("tags")}
+                    className="accent-indigo-500"
+                  />
+                  {tag}
+                </label>
               ))}
             </div>
-            
-            {/* Code Editor */}
-            {renderCodeEditor(
-              activeBoilerplateTab, 
-              problem.boilerplate[activeBoilerplateTab], 
-              handleBoilerplateChange
-            )}
-          </div>
 
-          {/* Section 4: Reference Solution */}
-          <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold text-indigo-400 mb-4">Reference Solution (Optimal)</h2>
-            
-            {/* Language Selection */}
-            <div className="w-64 mb-4">
-              <label htmlFor="ref-lang" className="block text-sm font-medium text-gray-400 mb-1">Solution Language</label>
-              <select
-                id="ref-lang"
-                value={activeSolutionLanguage}
-                onChange={(e) => setActiveSolutionLanguage(e.target.value)}
-                className="w-full bg-gray-900 text-white border border-gray-600 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
-              >
-                {SUPPORTED_LANGUAGES.map(lang => (
-                  <option key={lang} value={lang}>{lang}</option>
-                ))}
-              </select>
+            <p className="text-red-500 text-sm mt-1">{errors.tags?.message}</p>
+          </div>
+        </section>
+
+        {/* CONSTRAINTS */}
+        <section className="bg-[#161616] p-6 rounded-xl space-y-4">
+          <h2 className="text-xl font-semibold">Constraints</h2>
+
+          {constraints.fields.map((field, i) => (
+            <div key={field.id} className="flex gap-2">
+              <input
+                {...register(`constraints.${i}`)}
+                className="flex-1 bg-[#0f0f0f] border border-gray-700 rounded-lg p-2"
+                placeholder="e.g. 1 ≤ n ≤ 10^5"
+              />
+
+              {constraints.fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => constraints.remove(i)}
+                  className="text-red-400 hover:text-red-500"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            
-            {/* Solution Editor */}
-            {renderCodeEditor(
-              activeSolutionLanguage,
-              problem.referenceSolution.sourceCode,
-              (lang, code) => handleReferenceSolutionChange(lang, code)
-            )}
-            <p className="text-xs text-gray-500 mt-2">This solution is used by the system to verify test cases.</p>
-          </div>
+          ))}
 
-          {/* Submit Button */}
+          <p className="text-red-500 text-sm">{errors.constraints?.message}</p>
+
           <button
-            type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition duration-200 shadow-lg shadow-indigo-500/50"
+            type="button"
+            onClick={() => constraints.append("")}
+            className="text-sm text-blue-400 hover:underline"
           >
-            Submit Problem for Review
+            + Add constraint
           </button>
-        </form>
-      </div>
+        </section>
+
+        {/* VISIBLE TEST CASES */}
+        <section className="bg-[#161616] p-6 rounded-xl space-y-6">
+          <h2 className="text-xl font-semibold">Visible Test Cases</h2>
+
+          {visibleTC.fields.map((field, i) => (
+            <div
+              key={field.id}
+              className="border border-gray-700 p-4 rounded-lg space-y-2 relative"
+            >
+              {visibleTC.fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => visibleTC.remove(i)}
+                  className="absolute top-2 right-2 text-red-400 hover:text-red-500"
+                >
+                  ✕
+                </button>
+              )}
+
+              <textarea
+                {...register(`visibleTestCases.${i}.stdin`)}
+                placeholder="stdin"
+                className="w-full bg-[#0f0f0f] p-2 rounded"
+              />
+              <textarea
+                {...register(`visibleTestCases.${i}.expected_output`)}
+                placeholder="expected output"
+                className="w-full bg-[#0f0f0f] p-2 rounded"
+              />
+              <textarea
+                {...register(`visibleTestCases.${i}.explanation`)}
+                placeholder="explanation"
+                className="w-full bg-[#0f0f0f] p-2 rounded"
+              />
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() =>
+              visibleTC.append({
+                stdin: "",
+                expected_output: "",
+                explanation: "",
+              })
+            }
+            className="text-sm text-blue-400 hover:underline"
+          >
+            + Add visible test case
+          </button>
+        </section>
+
+        {/* HIDDEN TEST CASES */}
+        {/* HIDDEN TEST CASES */}
+        <section className="bg-[#161616] p-6 rounded-xl space-y-6">
+          <h2 className="text-xl font-semibold">Hidden Test Cases</h2>
+
+          {hiddenTC.fields.map((field, i) => (
+            <div key={field.id} className="relative space-y-2">
+              {hiddenTC.fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => hiddenTC.remove(i)}
+                  className="absolute top-0 right-0 text-red-400 hover:text-red-500"
+                >
+                  ✕
+                </button>
+              )}
+
+              <textarea
+                {...register(`hiddenTestCases.${i}.stdin`)}
+                placeholder="stdin"
+                className="w-full bg-[#0f0f0f] p-2 rounded"
+              />
+              <textarea
+                {...register(`hiddenTestCases.${i}.expected_output`)}
+                placeholder="expected output"
+                className="w-full bg-[#0f0f0f] p-2 rounded"
+              />
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => hiddenTC.append({ stdin: "", expected_output: "" })}
+            className="text-sm text-blue-400 hover:underline"
+          >
+            + Add hidden test case
+          </button>
+        </section>
+
+        {/* BOILERPLATE */}
+        <section className="bg-[#161616] p-6 rounded-xl space-y-6">
+          <h2 className="text-xl font-semibold">Boilerplate Code</h2>
+
+          {SUPPORTED_LANGUAGES.map((lang, i) => (
+            <div key={lang}>
+              <h3 className="text-sm font-semibold mb-1">{lang}</h3>
+              <textarea
+                rows={4}
+                {...register(`boilerplateCode.${i}.code`)}
+                className="w-full bg-[#0f0f0f] p-2 rounded"
+              />
+            </div>
+          ))}
+        </section>
+
+        {/* REFERENCE SOLUTIONS */}
+        <section className="bg-[#161616] p-6 rounded-xl space-y-6">
+          <h2 className="text-xl font-semibold">
+            Reference Solutions (Required)
+          </h2>
+
+          {SUPPORTED_LANGUAGES.map((lang, i) => (
+            <div key={lang}>
+              <h3 className="text-sm font-semibold mb-1">{lang}</h3>
+              <textarea
+                rows={4}
+                {...register(`referenceSolution.${i}.source_code`)}
+                className="w-full bg-[#0f0f0f] p-2 rounded"
+              />
+            </div>
+          ))}
+        </section>
+
+        {/* SUBMIT */}
+        <button
+          type="submit"
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 font-semibold hover:opacity-90 transition"
+        >
+          Create Problem
+        </button>
+      </form>
     </div>
   );
-};
-
-export default CreateProblemPage;
+}

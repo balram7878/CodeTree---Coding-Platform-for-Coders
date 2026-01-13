@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/auth", userRouter);
-app.use("/problem", problemRouter);
+app.use("/problems", problemRouter);
 app.use("/solution", solutionRouter);
 
 const initializeConnection = async () => {

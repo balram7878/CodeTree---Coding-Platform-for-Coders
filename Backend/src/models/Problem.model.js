@@ -76,11 +76,16 @@ const problemSchema = new Schema(
     problemCreator: {
       type: [
         {
-          type: mongoose.Schema.ObjectId,
-          ref: "Problem",
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
         },
       ],
       unique: true,
+    },
+    constraints: {
+      type: [String],
+      required: true,
     },
   },
   { timestamps: true }

@@ -8,6 +8,8 @@ const {
 const problem_model = require("../../models/Problem.model");
 const submission_model = require("../../models/Submission.model");
 
+
+
 const createProblem = async (req, res) => {
   try {
     validateProblem(req.body);
@@ -23,10 +25,13 @@ const createProblem = async (req, res) => {
       problemCreator,
     } = req.body;
 
+    console.log("Problem validated");
+
     const submissions = [];
 
     for (const { language, source_code } of referenceSolution) {
       const language_id = getLanguageId(language);
+
       for (const { stdin, expected_output } of visibleTestCases) {
         submissions.push({
           language_id,
