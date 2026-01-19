@@ -20,8 +20,8 @@ export default function AdminDashboardPage() {
   }, []);
 
   const [view, setView] = useState("none");
-
-  const firstLetter = user?.firstName ? user.firstName[0].toUpperCase() : "A";
+// console.log(user)
+  const firstLetter = user?.name ? user.name[0].toUpperCase() : "A";
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-gray-200 flex flex-col">
@@ -60,7 +60,7 @@ sm:right-0 sm:w-64 xs:fixed xs:top-16 xs:right-4 xs:left-4 xs:w-auto"
               <button
                 onClick={() => {
                   setOpen(false);
-                  navigate("/settings");
+                  navigate("/admin/settings");
                 }}
                 className="w-full text-left px-4 py-3 hover:bg-[#1c1c1c] text-gray-200 transition"
               >
@@ -81,7 +81,7 @@ sm:right-0 sm:w-64 xs:fixed xs:top-16 xs:right-4 xs:left-4 xs:w-auto"
               <button
                 onClick={() => {
                   setOpen(false);
-                  navigate("/logout");
+                  dispatch(logout());
                 }}
                 className="w-full text-left px-4 py-3 hover:bg-red-500/10 text-red-400 transition"
               >
@@ -134,7 +134,7 @@ sm:right-0 sm:w-64 xs:fixed xs:top-16 xs:right-4 xs:left-4 xs:w-auto"
             title="All Problems"
             subtitle="Full control"
             desc="Search, sort and manage the entire problem library with pagination and filters."
-            onClick={() => navigate("/admin/problems/show-all-problems")}
+            onClick={() => navigate("/admin/show-all-problems")}
             accent="from-sky-600/20 to-sky-600/5"
           />
         </div>

@@ -4,7 +4,7 @@ import Signup from "./component/Signup";
 import Homepage from "./component/Homepage";
 import AdminPage from "./component/AdminPage";
 import AdminDashboard from "./component/Admin Pages/AdminDashboard";
-import DeleteProblemPage from "./component/Admin Pages/DeleteProblemPage";
+import SettingPage from "./component/Admin Pages/SettingPage";
 import ShowAllProblemsPage from "./component/Admin Pages/ShowAllProblemsPage";
 import UpdateProblemPage from "./component/Admin Pages/Update Problem/UpdateProblemPage";
 import CreateProblemPage from "./component/Admin Pages/CreateProblemPage";
@@ -61,6 +61,7 @@ function App() {
           <Route path="update-problem" element={<UpdateProblemPage />} />
           <Route path="show-all-problems" element={<ShowAllProblemsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingPage />} />
           <Route
             path="problem/:id/edit"
             element={<UpdateProblemDetailPage />}

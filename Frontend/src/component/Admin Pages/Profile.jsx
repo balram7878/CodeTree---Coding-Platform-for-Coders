@@ -237,21 +237,21 @@ export default function ProfilePage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 pt-8 border-t border-gray-700">
+              <div className="flex flex-col sm:flex-row items-center gap-4 pt-8 border-t border-gray-700 w-full">
                 <button
                   type="button"
-                  className="px-8 py-3 rounded-lg bg-[#1e1e1e] border border-gray-700 hover:bg-[#2a2a2a] text-gray-200 font-semibold transition-all duration-200 flex-1 sm:flex-none"
+                  className="w-full sm:w-auto px-8 py-3 rounded-lg bg-[#1e1e1e] border-1 border-red-500 border-opacity-60 text-red-400 font-semibold hover:bg-red-500 hover:bg-opacity-10 hover:border-opacity-100 hover:text-white transition-all duration-200"
                 >
                   Reset Password
                 </button>
                 <button
                   type="submit"
                   disabled={saving || !isDirty}
-                  className="px-8 py-3 rounded-lg bg-[#1e1e1e] border border-gray-700 hover:bg-[#2a2a2a] text-gray-200 font-semibold transition-all duration-200 flex-1 sm:flex-none"
+                  className="w-full sm:w-auto px-8 py-3 rounded-lg bg-[#1e1e1e] border-1 border-green-500 border-opacity-60 text-green-400 font-semibold hover:bg-green-500 hover:bg-opacity-10 disabled:opacity-100 hover:text-white disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {saving ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                      <span className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></span>
                       Saving…
                     </span>
                   ) : (

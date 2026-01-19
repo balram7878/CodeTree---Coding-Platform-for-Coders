@@ -26,7 +26,7 @@ const getProfile = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-  console.log("update profile running");
+  // console.log("update profile running");
   try {
     const u = req.userId;
     const updates = req.body;
@@ -65,13 +65,13 @@ const login = async (req, res) => {
     const isPasswordValid = await u.comparePassword(password);
     if (!isPasswordValid) throw new Error("invalid credential");
     const token = jwt.sign(
-      { sub: u._id, name: u.firstName, email: u.email, role: u.role },
+      { sub: u._id, name: u.name, email: u.email, role: u.role },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "1h", jwtid: uuidv4() },
     );
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
     res.status(200).json({
-      firstName: u.firstName,
+      name: u.name,
       email: u.email,
       status: "login successfully",
     });
@@ -104,12 +104,12 @@ const adminRegister = async (req, res) => {
     req.body.password = await user.generatePasswordHash(password);
 
     await user.create(req.body);
-    // const token = jwt.sign(
-    //   { sub: u._id, name: u.name, email: u.email, role: u.role },
-    //   process.env.JWT_SECRET_KEY,
-    //   { expiresIn: "1h", jwtid: uuidv4() }
-    // );
-    // res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
+    const token = jwt.sign(
+      { sub: u._id, name: u.name, email: u.email, role: u.role },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "1h", jwtid: uuidv4() }
+    );
+    res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
     res.status(201).send("admin registered successfully");
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -135,7 +135,7 @@ const userRegister = async (req, res) => {
     );
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
     res.status(201).json({
-      firstName: u.firstName,
+      name: u.name,
       email: u.email,
       message: "user registered successfully",
     });

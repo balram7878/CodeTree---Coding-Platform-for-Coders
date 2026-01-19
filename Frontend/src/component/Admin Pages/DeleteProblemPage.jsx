@@ -52,7 +52,7 @@ export default function AdminProblemManagerPage() {
 
   const startPage = Math.max(
     1,
-    Math.min(page - Math.floor(MAX_VISIBLE / 2), totalPages - MAX_VISIBLE + 1)
+    Math.min(page - Math.floor(MAX_VISIBLE / 2), totalPages - MAX_VISIBLE + 1),
   );
 
   const endPage = Math.min(totalPages, startPage + MAX_VISIBLE - 1);
@@ -107,7 +107,7 @@ export default function AdminProblemManagerPage() {
           {problems.map((p, i) => (
             <div
               key={p._id}
-              className="bg-[#161616] border border-gray-800 rounded-xl p-5"
+              className="bg-[#161616] border border-gray-800 rounded-xl p-5 cursor-pointer hover:bg-[#1a1a1a] transition"
             >
               <h2 className="text-lg font-semibold">
                 {(page - 1) * limit + i + 1}. {p.title}
@@ -163,7 +163,7 @@ export default function AdminProblemManagerPage() {
           {/* PAGE NUMBERS */}
           {Array.from(
             { length: endPage - startPage + 1 },
-            (_, i) => startPage + i
+            (_, i) => startPage + i,
           ).map((p) => (
             <button
               key={p}
