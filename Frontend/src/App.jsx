@@ -10,6 +10,7 @@ import UpdateProblemPage from "./component/Admin Pages/Update Problem/UpdateProb
 import CreateProblemPage from "./component/Admin Pages/CreateProblemPage";
 import UpdateProblemDetailPage from "./component/Admin Pages/Update Problem/UpdateProblemDetailsPage";
 import AdminProblemManagerPage from "./component/Admin Pages/DeleteProblemPage";
+import ProfilePage from "./component/Admin Pages/Profile";
 import { authUser } from "./utils/authSlice";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
@@ -17,7 +18,7 @@ import { useEffect } from "react";
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, loading, user } = useSelector(
-    (state) => state?.auth
+    (state) => state?.auth,
   );
 
   console.log(user);
@@ -59,6 +60,7 @@ function App() {
           <Route path="delete-problem" element={<AdminProblemManagerPage />} />
           <Route path="update-problem" element={<UpdateProblemPage />} />
           <Route path="show-all-problems" element={<ShowAllProblemsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route
             path="problem/:id/edit"
             element={<UpdateProblemDetailPage />}

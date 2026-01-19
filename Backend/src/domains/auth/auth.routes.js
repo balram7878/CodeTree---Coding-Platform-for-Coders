@@ -8,6 +8,7 @@ const {
   userRegister,
   deleteProfile,
   authUser,
+  updateProfile,
 } = require("./auth.controller");
 
 const router = express.Router();
@@ -24,6 +25,8 @@ router.get("/getProfile", authValidation, getProfile);
 
 router.delete("/delete/profile", authValidation, deleteProfile);
 
-router.get("/authUser",authValidation, authUser);
+router.get("/authUser", authValidation, authUser);
+
+router.put("/update/profile", authValidation, updateProfile);
 
 module.exports = router;

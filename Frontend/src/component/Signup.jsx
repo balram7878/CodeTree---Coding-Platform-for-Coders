@@ -15,7 +15,7 @@ const schema = z.object({
     .regex(/[a-z]/, "Password must include at least one lowercase letter")
     .regex(/[0-9]/, "Password must include at least one number")
     .regex(/[@$!%*?&]/, "Password must include at least one special character"),
-  firstName: z
+  name: z
     .string()
     .min(3, "Name must be at least 3 characters long")
     .regex(/^[A-Za-z\s]+$/, "Name should contain only letters and spaces"),
@@ -60,11 +60,11 @@ export default function Signup() {
               placeholder="Enter your name"
               className="w-full p-2.5 mt-1 rounded-lg bg-gray-800 border border-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-900 outline-none"
               required
-              {...register("firstName")}
+              {...register("name")}
             />
-            {errors.fullName && (
+            {errors.name && (
               <span className="text-red-600 text-sm">
-                {errors.fullName.message}
+                {errors.name.message}
               </span>
             )}
           </div>

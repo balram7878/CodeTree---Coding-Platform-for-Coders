@@ -9,7 +9,7 @@ export default function AdminProblemManagerPage() {
   const search = searchParams.get("search") || "";
   const sort = searchParams.get("sort") || "created_desc";
   const page = Number(searchParams.get("page") || 1);
-  const limit = 1;
+  const limit = 5;
 
   const [problems, setProblems] = useState([]);
   const [totalPages, setTotalPages] = useState(1);

@@ -12,10 +12,33 @@ const getProfile = async (req, res) => {
     const { email } = req.user;
     // if(!email) res.status(401).json({error:"email not provided"});
     const u = await user.findOne({ email });
+    console.log(u); 
     if (!u) return res.status(401).json({ error: "user not found" });
-    res.status(200).json(u);
+    res.status(200).json({
+      name: u.name,
+      email: u.email,
+      dob: u.dob,
+      phone: u.phone,
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  console.log("update profile running");
+  try {
+    const u = req.userId;
+    const updates = req.body;
+    const updatedUser = await user.findByIdAndUpdate(u, updates, {
+      new: true,
+    });
+    res
+      .status(200)
+      .json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).json({ message: "Error updating profile" + error.message });
   }
 };
 
@@ -44,7 +67,7 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { sub: u._id, name: u.firstName, email: u.email, role: u.role },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h", jwtid: uuidv4() }
+      { expiresIn: "1h", jwtid: uuidv4() },
     );
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
     res.status(200).json({
@@ -82,7 +105,7 @@ const adminRegister = async (req, res) => {
 
     await user.create(req.body);
     // const token = jwt.sign(
-    //   { sub: u._id, name: u.firstName, email: u.email, role: u.role },
+    //   { sub: u._id, name: u.name, email: u.email, role: u.role },
     //   process.env.JWT_SECRET_KEY,
     //   { expiresIn: "1h", jwtid: uuidv4() }
     // );
@@ -106,9 +129,9 @@ const userRegister = async (req, res) => {
     const u = await user.create(req.body);
 
     const token = jwt.sign(
-      { sub: u._id, name: u.firstName, email: u.email, role: u.role },
+      { sub: u._id, name: u.name, email: u.email, role: u.role },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h", jwtid: uuidv4() }
+      { expiresIn: "1h", jwtid: uuidv4() },
     );
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
     res.status(201).json({
@@ -124,8 +147,9 @@ const userRegister = async (req, res) => {
 const authUser = async (req, res) => {
   try {
     // console.log("auth user running")
+    // console.log(req.user);
     res.status(200).json({
-      firstName: req.user.name,
+      name: req.user.name,
       email: req.user.email,
       role: req.role,
       message: "authenticated user",
@@ -145,4 +169,5 @@ module.exports = {
   adminRegister,
   deleteProfile,
   authUser,
+  updateProfile,
 };

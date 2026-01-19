@@ -3,14 +3,9 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-    firstName: {
+    name: {
       type: String,
       required: true,
-      minLength: 3,
-      maxLength: 20,
-    },
-    lastName: {
-      type: String,
       minLength: 3,
       maxLength: 20,
     },
@@ -25,6 +20,12 @@ const userSchema = new mongoose.Schema(
       minLength: 8,
       required: true,
     },
+    dob: {
+      type: Date,
+    },
+    phone: {
+      type: String,
+    },
     role: {
       type: String,
       default: "user",
@@ -35,7 +36,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.statics.generatePasswordHash = async function (password) {
