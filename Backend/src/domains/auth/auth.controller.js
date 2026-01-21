@@ -12,7 +12,7 @@ const getProfile = async (req, res) => {
     const { email } = req.user;
     // if(!email) res.status(401).json({error:"email not provided"});
     const u = await user.findOne({ email });
-    console.log(u); 
+ 
     if (!u) return res.status(401).json({ error: "user not found" });
     res.status(200).json({
       name: u.name,
