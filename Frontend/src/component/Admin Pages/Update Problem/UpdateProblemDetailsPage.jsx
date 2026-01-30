@@ -69,23 +69,70 @@ export default function UpdateProblemDetailPage() {
     fetchProblem();
   }, [id, reset]);
 
+  const sanitize = (data) => {
+    // create a deep copy and trim strings
+    const d = JSON.parse(JSON.stringify(data));
+    if (d.title) d.title = d.title.trim();
+    if (d.description) d.description = d.description.trim();
+    if (Array.isArray(d.tags)) d.tags = d.tags.map((t) => t.trim());
+    if (Array.isArray(d.constraints)) d.constraints = d.constraints.map((c) => c.trim()).filter(Boolean);
+
+    if (Array.isArray(d.visibleTestCases)) {
+      d.visibleTestCases = d.visibleTestCases
+        .map((tc) => ({
+          stdin: (tc.stdin || "").trim(),
+          expected_output: (tc.expected_output || "").trim(),
+          explanation: (tc.explanation || "").trim(),
+        }))
+        .filter((tc) => tc.stdin && tc.expected_output);
+    }
+
+    if (Array.isArray(d.hiddenTestCases)) {
+      d.hiddenTestCases = d.hiddenTestCases
+        .map((tc) => ({
+          stdin: (tc.stdin || "").trim(),
+          expected_output: (tc.expected_output || "").trim(),
+        }))
+        .filter((tc) => tc.stdin && tc.expected_output);
+    }
+
+    if (Array.isArray(d.boilerplateCode)) {
+      d.boilerplateCode = d.boilerplateCode.map((b) => ({
+        language: b.language,
+        code: (b.code || "").trim(),
+      }));
+    }
+
+    if (Array.isArray(d.referenceSolution)) {
+      d.referenceSolution = d.referenceSolution.map((r) => ({
+        language: r.language,
+        source_code: (r.source_code || "").trim(),
+      }));
+    }
+
+    return d;
+  };
+
   const onSubmit = async (currentData) => {
-    // console.log("before initial data", currentData, "/n", initialData);
     if (!initialData) return;
-    console.log("onsubmit");
-    const payload = getUpdatePayload(initialData, currentData);
-    // console.log("/n", payload);
+
+    const normalizedCurrent = sanitize(currentData);
+    const normalizedInitial = sanitize(initialData);
+
+    const payload = getUpdatePayload(normalizedInitial, normalizedCurrent);
+
     if (Object.keys(payload).length === 0) {
-      alert("No changes detected");
+      setError("No changes detected");
       return;
     }
 
     try {
       setSaving(true);
       await axiosClient.put(`problems/update/${id}`, payload);
-      navigate(-1); // go back to list
+      // go back one step in history (works with browser history and preserved query params)
+      window.history.back();
     } catch (err) {
-      alert("Failed to update problem");
+      setError(err.response?.data?.error || err.message || "Failed to update problem");
     } finally {
       setSaving(false);
     }
@@ -107,8 +154,13 @@ export default function UpdateProblemDetailPage() {
     );
   }
 
-  console.log(initialData)
-  console.log(errors);
+  // show form-level errors near the top
+  // (errors from zod are shown next to fields)
+  
+  
+  // console logs removed for cleanliness
+  
+
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-gray-200 p-10">
@@ -116,6 +168,9 @@ export default function UpdateProblemDetailPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="max-w-5xl mx-auto space-y-10"
       >
+        {error && (
+          <div className="bg-red-900/40 text-red-300 p-3 rounded">{error}</div>
+        )}
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold tracking-wide">Update Problem</h1>

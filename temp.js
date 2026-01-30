@@ -1,16 +1,7 @@
-// function Person(name){
-//     this.name=name;
-// }
+console.log("Array  ,DP, ,Tree,Heap,Linked List,Graph  ".split(",").map(t=>t.trim()).filter(Boolean).slice(0,5));
 
-// Person.prototype.whoIAM=function(){
-//     console.log(`Hey, I am ${this.name}`);
-// }
+// const search = "Sample Problem";
 
-// const p=new Person("Balram");
-// p.whoIAM();
+//   const orConditions = [{ title: { $regex: search, $options: "i" } }];
 
-// const obj={};
-// obj.__proto__=p.__proto__;
-// console.log(p.__proto__)
-let obj={};
-console.log(obj.name);
+//   console.log(orConditions);

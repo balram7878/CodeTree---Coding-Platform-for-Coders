@@ -13,10 +13,6 @@ export default function AdminDashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    setSearchParams();
-  }, []);
-
-  useEffect(() => {
     const onClick = (e) => {
       if (!ref.current) return;
       if (!ref.current.contains(e.target)) setOpen(false);

@@ -1,18 +1,22 @@
 import { useNavigate, useSearchParams } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axiosClient from "../../utils/axiosClient";
 import image from "../../../public/image4.jpg";
 
-const TOPICS = [
-  "array",
-  "linked-list",
-  "stack",
-  "queue",
-  "binary-search",
-  "tree",
-  "graph",
-  "dp",
+const TAGS = [
+  "Array",
+  "Linked List",
+  "Stack",
+  "Queue",
+  "Tree",
+  "Graph",
+  "DP",
+  "Greedy",
+  "Math",
+  "String",
 ];
+
+const TOPICS = TAGS;
 
 function Spinner({ size = 6 }) {
   return (
@@ -24,118 +28,132 @@ function Spinner({ size = 6 }) {
 
 export default function ProblemsPage() {
   const navigate = useNavigate();
-
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const search = searchParams.get("search") || "";
-  const sort = searchParams.get("sort") || "created_desc";
-  const page = Number(searchParams.get("page") || 1);
-  const topicsQuery = searchParams.get("topics") || "";
-  const limit = 4;
-
-  const [searchInput, setSearchInput] = useState(search);
-  const [selectedTopics, setSelectedTopics] = useState(
-    topicsQuery ? topicsQuery.split(",").filter(Boolean) : [],
-  );
-
   const [problems, setProblems] = useState([]);
-  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [clickLoadingId, setClickLoadingId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 4;
+  const MAX_VISIBLE = 5;
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedTags, setSelectedTags] = useState(() => {
+    const tagsParam = searchParams.get("tags") || "";
+    return tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+  });
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "");
 
-  const fetchProblems = async (signal) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axiosClient.get("problems/getProblems", {
-        params: {
-          page,
-          limit,
-          search: searchParams.get("search") || "",
-          sort,
-          topics: selectedTopics.join(","),
-        },
-        signal,
-      });
-      // console.log(res.data);
-      // res.data.data.forEach((p) => {
-      //   p.isSolved = true; // TODO: mark solved problems based on user data
-      // });
-      setProblems(res.data.data || []);
-      setTotalPages(res.data.pagination?.totalPages || 1);
-    } catch (err) {
-      if (err.name !== "CanceledError") {
-        setError("Failed to load problems");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch when page / sort / topics change
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchProblems(controller.signal);
-    return () => controller.abort();
-  }, [searchInput, page, sort, selectedTopics]);
-
-  // Debounce local search input and update URL params
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchParams({
-        search: searchInput,
-        sort,
-        page: 1,
-        topics: selectedTopics.join(","),
-      });
-    }, 450);
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput, selectedTopics]);
+  const search = searchParams.get("search") || "";
 
   useEffect(() => {
-    // keep local input synced with URL if user navigates back
     setSearchInput(search);
   }, [search]);
 
-  const toggleTopic = (t) => {
-    setSelectedTopics((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
-    );
-  };
+  useEffect(() => {
+    // debounce search input only — tags and sort changes are handled by their own handlers
+    const id = setTimeout(() => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+
+        if (searchInput.trim()) {
+          params.set("search", searchInput.slice(0, 200));
+        } else {
+          params.delete("search");
+        }
+
+        // keep page reset when doing a new search
+        params.set("page", "1");
+
+        // preserve tags and sort while searching
+        if (selectedTags.length) params.set("tags", selectedTags.join(","));
+        else params.delete("tags");
+
+        if (sort) params.set("sort", sort);
+        else params.delete("sort");
+
+        return params;
+      });
+    }, 500);
+
+    return () => clearTimeout(id);
+  }, [searchInput]);
+
+  const fetchProblems = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = {
+        search,
+        page,
+        limit,
+      };
+      if (selectedTags.length) params.tags = selectedTags.join(",");
+      if (sort) params.sort = sort;
+
+      const res = await axiosClient.get("/problems/getProblems", {
+        params,
+      });
+      setProblems(res.data?.problems || []);
+      setTotalPages(res.data?.pagination?.totalPages || 1);
+    } catch (err) {
+      setError(
+        "Failed to load problems: " +
+          (err.response?.data?.error || err.message),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [search, page, selectedTags, sort]);
+
+  useEffect(() => {
+    fetchProblems();
+  }, [fetchProblems]);
+
+  // keep URL in sync when page changes so browser back/forward works as expected
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+
+      if (search.trim()) params.set("search", search);
+      else params.delete("search");
+
+      if (selectedTags.length) params.set("tags", selectedTags.join(","));
+      else params.delete("tags");
+
+      if (sort) params.set("sort", sort);
+      else params.delete("sort");
+
+      if (params.get("page") !== String(page)) params.set("page", String(page));
+
+      return params;
+    });
+  }, [page, selectedTags, sort]);
+
+  // if user changes URL manually (back/forward), update internal page state
+  useEffect(() => {
+    const p = Number(searchParams.get("page")) || 1;
+    if (p !== page) setPage(p);
+
+    const tagsParam = searchParams.get("tags") || "";
+    const parsedTags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+    // only update selectedTags if it really changed (avoid resetting page due to new array identity)
+    const sortArr = (arr) => (arr || []).slice().sort().join(",");
+    if (sortArr(parsedTags) !== sortArr(selectedTags)) setSelectedTags(parsedTags);
+
+    const s = searchParams.get("sort") || "";
+    if (s !== sort) setSort(s);
+  }, [searchParams]);
 
   const goPrev = () => {
-    if (page > 1) {
-      setSearchParams({
-        search: searchParams.get("search") || "",
-        sort,
-        page: page - 1,
-        topics: selectedTopics.join(","),
-      });
-    }
+    if (page > 1) setPage(page - 1);
   };
 
   const goNext = () => {
-    setSearchParams({
-      search: searchParams.get("search") || "",
-      sort,
-      page: page + 1,
-      topics: selectedTopics.join(","),
-    });
+    if (page < totalPages) setPage(page + 1);
   };
 
-  const goToPage = (p) => {
-    setSearchParams({
-      search: searchParams.get("search") || "",
-      sort,
-      page: p,
-      topics: selectedTopics.join(","),
-    });
+  const goToPage = (pageNum) => {
+    setPage(pageNum);
   };
-
-  const MAX_VISIBLE = 5;
 
   const startPage = Math.max(
     1,
@@ -145,9 +163,25 @@ export default function ProblemsPage() {
   const endPage = Math.min(totalPages, startPage + MAX_VISIBLE - 1);
 
   const onProblemClick = (id) => {
-    setClickLoadingId(id);
-    // navigate to practice page
     navigate(`/practice/${id}`);
+  };
+
+  const toggleTopic = (t) => {
+    setSelectedTags((prev) => {
+      const exists = prev.includes(t);
+      const next = exists ? prev.filter((x) => x !== t) : [...prev, t];
+      // reset to page 1 on tag change
+      setPage(1);
+      return next;
+    });
+  };
+
+  const clearAll = () => {
+    setSearchInput("");
+    setSelectedTags([]);
+    setSort("");
+    setPage(1);
+    setSearchParams({});
   };
 
   const difficultyClass = (d) => {
@@ -176,16 +210,17 @@ export default function ProblemsPage() {
           <div className="flex justify-center  p-3 rounded-xl">
             <div className="flex flex-wrap gap-3">
               {TOPICS.map((t) => {
-                const active = selectedTopics.includes(t);
+                const selected = selectedTags.includes(t);
                 return (
                   <button
                     key={t}
                     onClick={() => toggleTopic(t)}
-                    className={`px-3 py-1 rounded-lg text-sm border ${
-                      active
-                        ? "bg-white/10 border-white/20 text-white"
-                        : "bg-transparent border-gray-700 text-gray-300"
+                    className={`px-3 py-1 rounded-lg text-md border ${
+                      selected
+                        ? "bg-black border border-white text-white"
+                        : "bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
                     }`}
+                    aria-pressed={selected}
                   >
                     {t}
                   </button>
@@ -199,12 +234,12 @@ export default function ProblemsPage() {
               <input
                 placeholder="Search by title or problem number"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => setSearchInput(e.target.value.slice(0,200))}
                 className="flex-1 bg-transparent outline-none px-3 py-2 text-gray-200"
               />
               <button
                 onClick={() => setSearchInput("")}
-                className="text-sm text-gray-400 px-3 py-1 hover:text-white"
+                className="text-md text-gray-400 px-3 py-1 hover:text-white"
               >
                 Clear
               </button>
@@ -213,21 +248,25 @@ export default function ProblemsPage() {
             <div className="flex items-center gap-3">
               <select
                 value={sort}
-                onChange={(e) =>
-                  setSearchParams({
-                    search: searchInput,
-                    sort: e.target.value,
-                    page: 1,
-                    topics: selectedTopics.join(","),
-                  })
-                }
-                className="bg-[#0b0b0b]/70 border border-gray-800 rounded-lg px-3 py-4 text-gray-200"
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-[#0b0b0b]/70 border border-gray-800 rounded-lg  p-2 text-gray-200 outline-none"
               >
-                <option value="created_desc">Newest</option>
-                <option value="created_asc">Oldest</option>
-                <option value="title_asc">Title A–Z</option>
-                <option value="title_desc">Title Z–A</option>
+                <option defaultChecked disabled value="">Sort</option>
+                <option value="difficulty_asc">Easy → Hard</option>
+                <option value="difficulty_desc">Hard → Easy</option>
+                {/* <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option> */}
               </select>
+
+              <button
+                onClick={clearAll}
+                className="bg-[#1f1f1f] border border-gray-700 px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800"
+              >
+                Clear All
+              </button>
             </div>
           </div>
 
@@ -238,6 +277,19 @@ export default function ProblemsPage() {
               <span>Loading problems…</span>
             </div>
           )}
+
+          {/* selected tags */}
+          {selectedTags.length > 0 && (
+            <div className="flex gap-2 flex-wrap text-sm">
+              {selectedTags.map((t) => (
+                <div key={t} className="px-2 py-1 rounded-full bg-black text-white flex items-center gap-2">
+                  <span>{t}</span>
+                  <button onClick={() => toggleTopic(t)} aria-label={`remove ${t}`} className="text-white/80">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {error && <div className="text-red-400">{error}</div>}
           {!loading && problems.length === 0 && (
             <div className="text-gray-400">No problems found</div>
@@ -256,8 +308,18 @@ export default function ProblemsPage() {
                   {problem.isSolved ? (
                     <div className="flex-shrink-0 mt-3 solved-indicator">
                       <div className="w-8 h-8 -ml-2 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 00-1.414-1.414L8 11.172l-3.293-3.293A1 1 0 003.293 9.293l4 4a1 1 0 001.414 0l8-8z" clipRule="evenodd" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 00-1.414-1.414L8 11.172l-3.293-3.293A1 1 0 003.293 9.293l4 4a1 1 0 001.414 0l8-8z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                     </div>
@@ -272,7 +334,9 @@ export default function ProblemsPage() {
                           {(page - 1) * limit + index + 1}. {problem.title}
                         </h2>
                         <div className="text-sm text-gray-400 mt-2 problem-meta">
-                          <span className="mr-3 meta-inline">ID: {problem._id}</span>
+                          <span className="mr-3 meta-inline">
+                            ID: {problem._id}
+                          </span>
                           <span className="mr-3 meta-inline">
                             Tags: {(problem.tags || []).slice(0, 4).join(", ")}
                           </span>
@@ -281,7 +345,7 @@ export default function ProblemsPage() {
 
                       <div className="flex items-center gap-3 mt-3 md:mt-0">
                         <span
-                          className={`px-2 py-1 rounded-lg text-xs text-white text-center  ${difficultyClass(problem.difficulty || "Easy")}`}
+                          className={`px-2 py-1 rounded-lg text-sm text-white text-center  ${difficultyClass(problem.difficulty || "Easy")}`}
                         >
                           {problem.difficulty || "Easy"}
                         </span>
