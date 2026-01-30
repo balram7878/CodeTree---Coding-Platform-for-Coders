@@ -1,84 +1,106 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { useState, useEffect } from "react";
-
 import axiosClient from "../../../utils/axiosClient";
-
 export default function UpdateProblemPage() {
   const navigate = useNavigate();
-
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const search = searchParams.get("search") || "";
-  const sort = searchParams.get("sort") || "created_desc";
-  const page = Number(searchParams.get("page") || 1);
-  const limit = 5;
-
-  // const [limit] = useState(5);
-
   const [problems, setProblems] = useState([]);
-  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchProblems = async (signal) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axiosClient.get("problems/getProblems", {
-        params: { page, limit, search, sort },
-        signal,
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 5;
+  const MAX_VISIBLE = 5;
+
+  const [searchInput, setSearchInput] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const search = searchParams.get("search") || "";
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+
+        if (searchInput.trim()) {
+          params.set("search", searchInput);
+        } else {
+          params.delete("search");
+        }
+
+        params.set("page", "1");
+        return params;
       });
-      setProblems(res.data.data || []);
-      setTotalPages(res.data.pagination?.totalPages || 1);
-    } catch (err) {
-      if (err.name !== "CanceledError") {
-        setError("Failed to load problems");
+    }, 500);
+
+    return () => clearTimeout(id);
+  }, [searchInput]);
+
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    problem: null,
+    confirm: "",
+  });
+
+  function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  useEffect(() => {
+    const fetchProblems = async () => {
+      try {
+        setLoading(true);
+        const res = await axiosClient.get("/problems/getProblems", {
+          params: {
+            search,
+            page,
+            limit,
+          },
+        });
+        setProblems(res.data?.problems || []);
+        setTotalPages(res.data?.pagination?.totalPages || 1);
+      } catch (err) {
+        setError("Failed to load problems: " + err.message);
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
+    };
+
+    fetchProblems();
+  }, [search, page]);
+
+  const confirmDelete = async (problemId) => {
+    if (deleteModal.confirm !== deleteModal.problem.title) return;
+
+    try {
+      await axiosClient.delete(`problems/delete/${deleteModal.problem._id}`);
+      setDeleteModal({ open: false, problem: null, confirm: "" });
+    } catch (err) {
+      <div role="alert" class="alert alert-error alert-outline">
+        <span>Error! Task failed successfully.</span>
+      </div>;
     }
   };
 
-  // Pagination + sort
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchProblems(controller.signal);
-    return () => controller.abort();
-  }, [page, search, sort]);
-
-  // Search (debounced)
-  useEffect(() => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      // setPage(1);
-      fetchProblems(controller.signal);
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [search]);
-
   const goPrev = () => {
-    if (page > 1) {
-      setSearchParams({ search, sort, page: page - 1 });
-    }
+    if (page > 1) setPage(page - 1);
   };
 
   const goNext = () => {
-    setSearchParams({ search, sort, page: page + 1 });
+    if (page < totalPages) setPage(page + 1);
   };
 
-  const goToPage = (p) => {
-    setSearchParams({ search, sort, page: p });
+  const goToPage = (pageNum) => {
+    setPage(pageNum);
   };
-
-  const MAX_VISIBLE = 5;
 
   const startPage = Math.max(
     1,
-    Math.min(page - Math.floor(MAX_VISIBLE / 2), totalPages - MAX_VISIBLE + 1)
+    Math.min(page - Math.floor(MAX_VISIBLE / 2), totalPages - MAX_VISIBLE + 1),
   );
 
   const endPage = Math.min(totalPages, startPage + MAX_VISIBLE - 1);
@@ -89,36 +111,14 @@ export default function UpdateProblemPage() {
         <h1 className="text-3xl font-bold">Update Problems</h1>
 
         {/* CONTROLS */}
+
         <div className="flex flex-col md:flex-row gap-4 bg-[#161616] p-4 rounded-xl border border-gray-800">
           <input
-            placeholder="Search by title or problem ID..."
-            value={search}
-            onChange={(e) =>
-              setSearchParams({
-                search: e.target.value,
-                page: 1, // reset page
-                sort,
-              })
-            }
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search problems..."
             className="flex-1 bg-[#0f0f0f] border border-gray-700 rounded-lg px-4 py-2 outline-none"
           />
-
-          <select
-            value={sort}
-            onChange={(e) =>
-              setSearchParams({
-                search,
-                sort: e.target.value,
-                page: 1,
-              })
-            }
-            className="bg-[#0f0f0f] border border-gray-700 rounded-lg px-4 py-2"
-          >
-            <option value="created_desc">Newest First</option>
-            <option value="created_asc">Oldest First</option>
-            <option value="title_asc">Title A–Z</option>
-            <option value="title_desc">Title Z–A</option>
-          </select>
         </div>
 
         {/* STATES */}
@@ -178,7 +178,7 @@ export default function UpdateProblemPage() {
           {/* PAGE NUMBERS */}
           {Array.from(
             { length: endPage - startPage + 1 },
-            (_, i) => startPage + i
+            (_, i) => startPage + i,
           ).map((p) => (
             <button
               key={p}

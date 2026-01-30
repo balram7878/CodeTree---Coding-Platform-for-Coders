@@ -47,14 +47,14 @@ export default function Header() {
           <nav className="hidden md:flex gap-8 items-center">
             <button
               onClick={() => navigate("/problems")}
-              className="text-gray-300 hover:text-white text-sm font-medium transition-colors duration-300 relative group"
+              className="text-gray-300 hover:text-white text-lg font-medium transition-colors duration-300 relative group"
             >
               Problems
               <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-600 group-hover:w-full transition-all duration-300"></div>
             </button>
             <button
               onClick={() => navigate("/user/dashboard")}
-              className="text-gray-300 hover:text-white text-sm font-medium transition-colors duration-300 relative group"
+              className="text-gray-300 hover:text-white text-lg font-medium transition-colors duration-300 relative group"
             >
               Dashboard
               <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-600 group-hover:w-full transition-all duration-300"></div>
@@ -86,7 +86,7 @@ export default function Header() {
                       <p className="text-xl text-white font-semibold truncate text-sm mt-1">
                         {user?.name || "User"}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-sm text-gray-500 truncate">
                         {user?.email || "user@example.com"}
                       </p>
                     </div>
@@ -100,7 +100,7 @@ export default function Header() {
                       setOpen(false);
                       navigate("/user/profile");
                     }}
-                    className="w-full text-left px-4 py-3 text-gray-200 rounded-lg hover:bg-gray-700/40 hover:text-gray-100 transition-all duration-200 text-sm font-medium"
+                    className="w-full text-left px-4 py-3 text-gray-200 rounded-lg hover:bg-gray-700/40 hover:text-gray-100 transition-all duration-200 text-md font-medium"
                   >
                     Profile
                   </button>
@@ -143,7 +143,7 @@ export default function Header() {
                       setOpen(false);
                       dispatch(logout());
                     }}
-                    className="w-full text-left px-4 py-3 text-red-400 rounded-lg hover:bg-red-500/10 hover:text-red-300 transition-all duration-200 text-sm font-medium border border-red-500/20 hover:border-red-500/40"
+                    className="w-full text-left px-4 py-3 text-red-400 rounded-lg hover:bg-red-500/10 hover:text-red-300 transition-all duration-200 text-md font-medium border border-red-500/20 hover:border-red-500/40"
                   >
                     Logout
                   </button>

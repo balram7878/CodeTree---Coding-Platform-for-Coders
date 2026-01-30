@@ -122,7 +122,7 @@ export default function UpdateProblemDetailPage() {
 
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.back()}
             className="text-sm text-gray-400 hover:text-gray-200"
           >
             ← Back

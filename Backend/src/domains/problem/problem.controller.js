@@ -80,17 +80,11 @@ const deleteProblem = async (req, res) => {
 
 const getProblems = async (req, res) => {
 
+
   try {
-    const {
-      page = 1,
-      limit = 5,
-      search = "",
-      sort = "created_desc",
-    } = req.query;
+    const { page, limit, search } = req.query;
+    // console.log(typeof(limit));
 
-    const skip = (page - 1) * limit;
-
-    //SEARCH (title OR problem id)
     const query = {
       $or: [
         { title: { $regex: search, $options: "i" } },
@@ -98,34 +92,20 @@ const getProblems = async (req, res) => {
       ],
     };
 
-    // remove null _id condition
-    if (!search.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or.pop();
-    }
+    const skip = (Number(page) - 1) * Number(limit);
 
-    // SORT
-    const sortMap = {
-      created_desc: { createdAt: -1 },
-      created_asc: { createdAt: 1 },
-      title_asc: { title: 1 },
-      title_desc: { title: -1 },
-    };
-
-    const problems = await problem_model.find(query)
-      .sort(sortMap[sort])
+    const problems = await problem_model
+      .find(query)
+      .select("_id title difficulty tags createdAt")
       .skip(skip)
-      .limit(Number(limit))
-      .select("_id title difficulty tags createdAt isSolved");
-
-    const total = await problem_model.countDocuments(query);
+      .limit(Number(limit) || 5);
     // console.log(problems);
     res.status(200).json({
-      data: problems,
+      problems,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / limit),
-        totalItems: total,
+        totalPages: Math.ceil(
+          (await problem_model.countDocuments()) / Number(limit),
+        ),
       },
     });
   } catch (err) {
@@ -140,7 +120,7 @@ const getProblem = async (req, res) => {
     const problem = await problem_model
       .findById(_id)
       .select(
-        "_id title description tags difficulty visibleTestCases boilerplateCode hiddenTestCases constraints referenceSolution"
+        "_id title description tags difficulty visibleTestCases boilerplateCode hiddenTestCases constraints referenceSolution",
       );
     if (!problem) return res.status(404).json({ message: "problem not found" });
     res.status(200).json(problem);

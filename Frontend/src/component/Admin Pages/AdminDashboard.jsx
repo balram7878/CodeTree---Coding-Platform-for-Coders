@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { useNavigate,useSearchParams } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../utils/authSlice";
@@ -9,6 +9,12 @@ export default function AdminDashboardPage() {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const { user } = useSelector((state) => state.auth);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    setSearchParams();
+  }, []);
 
   useEffect(() => {
     const onClick = (e) => {

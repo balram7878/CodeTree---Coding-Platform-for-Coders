@@ -12,5 +12,5 @@
 // const obj={};
 // obj.__proto__=p.__proto__;
 // console.log(p.__proto__)
-
-console.log(...Array(12))
+let obj={};
+console.log(obj.name);
